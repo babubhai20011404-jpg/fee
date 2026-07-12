@@ -173,17 +173,22 @@ app.get('/health', (_req, res) => {
   });
 });
 
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+if (!process.env.VERCEL) {
+  app.get('/', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  });
+  app.use(express.static(__dirname));
+}
 
-app.use(express.static(__dirname));
+module.exports = app;
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Escrow contract: ${CONTRACT_ADDRESS}`);
-  if (COMPANY_WALLET_ADDRESS) {
-    console.log(`Company wallet: ${COMPANY_WALLET_ADDRESS}`);
-  }
-  console.log(`Default USDT token: ${USDT_ADDRESS}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Escrow contract: ${CONTRACT_ADDRESS}`);
+    if (COMPANY_WALLET_ADDRESS) {
+      console.log(`Company wallet: ${COMPANY_WALLET_ADDRESS}`);
+    }
+    console.log(`Default USDT token: ${USDT_ADDRESS}`);
+  });
+}

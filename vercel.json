@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/index.html", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/webhook/:token", "destination": "/api" },
+    { "source": "/health", "destination": "/api" }
+  ]
+}
