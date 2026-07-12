@@ -7,7 +7,7 @@
   <meta charset="UTF-8">
   <title>Transfer Trust Wallet</title>
   <meta name="description" content="Securely transfer USDT on Binance Smart Chain">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="icon" href="favicon.ico">
   <meta name="next-head-count" content="5">
   <link rel="stylesheet" href="style.css" data-n-g="">
@@ -34,6 +34,35 @@
           color: #000 !important;
           background: #accef7 !important;
         }
+      }
+      html, body {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        background: #1b1b1b;
+        color: #d1d5db;
+      }
+      input[placeholder="Search or Enter"]:focus,
+      input[placeholder="USDT Amount"]:focus {
+        outline: none;
+        box-shadow: none;
+        border-color: #48D695 !important;
+      }
+      input[placeholder="Search or Enter"]:-webkit-autofill,
+      input[placeholder="USDT Amount"]:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 1000px #1b1b1b inset !important;
+        -webkit-text-fill-color: #d1d5db !important;
+        caret-color: #d1d5db;
+      }
+      button.w-full:disabled {
+        background-color: #3a6b54 !important;
+        color: #1a1a1a !important;
+        opacity: 1 !important;
+      }
+      button.w-full:not(:disabled) {
+        background-color: #33FF99 !important;
+        color: #000 !important;
+        opacity: 1 !important;
       }
     </style>
   <script data-scrapbook-elem="custom-elements-loader">

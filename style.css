@@ -758,6 +758,38 @@ body {
     opacity: .5
 }
 
+.h-\[40px\] {
+    height: 40px
+}
+
+.bg-\[\#1f1f1f\] {
+    --tw-bg-opacity: 1;
+    background-color: rgb(31 31 31/var(--tw-bg-opacity,1))
+}
+
+.text-\[15px\] {
+    font-size: 15px;
+    line-height: 1.25rem
+}
+
+.ml-1 {
+    margin-left: .25rem
+}
+
+.object-contain {
+    -o-object-fit: contain;
+    object-fit: contain
+}
+
+.object-cover {
+    -o-object-fit: cover;
+    object-fit: cover
+}
+
+.leading-none {
+    line-height: 1
+}
+
 
 
 

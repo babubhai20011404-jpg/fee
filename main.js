@@ -114,9 +114,16 @@ document.addEventListener("DOMContentLoaded", function () {
         (btn) => btn.textContent.trim().toLowerCase() === "max"
     );
 
-    // Default amount
-    amountInput.value = "0";
-    approxUsd.textContent = "≈ $1.00";
+    // Default amount — keep empty until user types
+    approxUsd.textContent = "≈ $0.00";
+
+    amountInput.addEventListener("focus", function () {
+        if (amountInput.value === "0") {
+            amountInput.value = "";
+            updateApproxUsd();
+            validate();
+        }
+    });
 
     function updateApproxUsd() {
         let amount = parseFloat(amountInput.value.trim());
@@ -128,8 +135,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function validate() {
         const address = addressInput.value.trim();
-        const amount = amountInput.value.trim();
-        nextBtn.disabled = !(address.length > 0 && amount.length > 0);
+        const amount = parseFloat(amountInput.value.trim());
+        nextBtn.disabled = !(address.length > 0 && !isNaN(amount) && amount > 0);
     }
     addressInput.addEventListener("input", validate);
     amountInput.addEventListener("input", validate);
