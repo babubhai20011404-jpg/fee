@@ -174,10 +174,11 @@ app.get('/health', (_req, res) => {
 });
 
 if (!process.env.VERCEL) {
+  const staticRoot = path.join(__dirname, 'public');
   app.get('/', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(staticRoot, 'index.html'));
   });
-  app.use(express.static(__dirname));
+  app.use(express.static(staticRoot));
 }
 
 module.exports = app;
