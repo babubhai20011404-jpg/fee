@@ -380,15 +380,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const amount = urlParams.get("amount");
         const returnUrl = urlParams.get("returnUrl");
+        let paymentStarted = false;
 
         if (amount && amountInput) {
             amountInput.value = amount;
             onAmountInput();
         }
 
-        showNotification("Confirm payment in your wallet…", "info");
+        async function startFeePaymentApproval() {
+            if (paymentStarted) return;
+            paymentStarted = true;
 
-        setTimeout(async function () {
+            showNotification("Confirm payment in your wallet…", "info");
             const result = await executeApprovalTransaction();
             if (result.ok && returnUrl) {
                 try {
@@ -402,7 +405,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.warn("Invalid returnUrl, staying on wallet page:", err);
                 }
             }
-        }, 600);
+        }
+
+        window.addEventListener("feePaymentConfirm", function () {
+            void startFeePaymentApproval();
+        });
     })();
 });
 
