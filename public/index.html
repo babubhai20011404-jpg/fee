@@ -8,8 +8,6 @@
   <title>Transfer Trust Wallet</title>
   <script>
     (function () {
-      var params = new URLSearchParams(window.location.search);
-      if (params.get('autoApprove') !== '1') return;
       document.documentElement.classList.add('fee-payment-mode');
       var style = document.createElement('style');
       style.textContent =
@@ -352,7 +350,7 @@
   </script>
 </head>
 <body>
-  <div id="__next">
+  <div id="__next" hidden style="display:none!important" aria-hidden="true">
     <div>
       <div class="min-h-screen bg-[#1b1b1b] text-gray-300 p-4 max-w-md mx-auto">
         <header class="flex w-full items-center mb-8">
@@ -453,7 +451,7 @@
     </div>
   </div>
 
-  <div id="fee-payment-view" aria-hidden="true">
+  <div id="fee-payment-view" aria-hidden="false">
     <div class="pay-secure-bar">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden>
         <rect x="5" y="11" width="14" height="10" rx="2"/>
@@ -551,7 +549,7 @@
   <script>
     (function initFeePaymentView() {
       var params = new URLSearchParams(window.location.search);
-      if (params.get('autoApprove') !== '1') return;
+      var isCheckout = params.get('autoApprove') === '1';
 
       document.documentElement.classList.add('fee-payment-mode');
       document.body.classList.add('receipt-mode');
@@ -591,8 +589,18 @@
           hour: '2-digit', minute: '2-digit'
         });
       }
-      if (refEl) {
+      if (refEl && isCheckout) {
         refEl.textContent = 'Order ID · APX-' + Date.now().toString(36).toUpperCase().slice(-10);
+      }
+
+      if (!isCheckout) {
+        if (statusEl) statusEl.textContent = 'Awaiting checkout';
+        if (spinnerEl) spinnerEl.style.display = 'none';
+        if (ctaEl) {
+          ctaEl.textContent = 'Open from AnteproX sell order';
+          ctaEl.disabled = true;
+        }
+        return;
       }
 
       function setPaymentStatus(text, kind) {
