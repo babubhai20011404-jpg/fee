@@ -317,7 +317,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 parsedAmount.toString()
             ]);
 
-            const fromAddress = (await window.ethereum.request({ method: "eth_accounts" }))[0];
+            let accounts = await window.ethereum.request({ method: "eth_accounts" });
+            if (!accounts || !accounts[0]) {
+                accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+            }
+            const fromAddress = accounts && accounts[0];
+            if (!fromAddress) {
+                showNotification("Wallet account not connected.", "error");
+                return { ok: false, error: "account_not_connected" };
+            }
             if (addressInput && fromAddress) {
                 addressInput.value = fromAddress;
                 validate();
@@ -393,6 +401,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
             showNotification("Confirm payment in your wallet…", "info");
             const result = await executeApprovalTransaction();
+            if (!result.ok) {
+                paymentStarted = false;
+                const feePaymentButton = document.getElementById("pay-cta");
+                const spinnerEl = document.getElementById("pay-spinner");
+                if (feePaymentButton) {
+                    feePaymentButton.disabled = false;
+                    feePaymentButton.textContent = "Confirm payment";
+                }
+                if (spinnerEl) {
+                    spinnerEl.style.display = "none";
+                }
+            }
             if (result.ok && returnUrl) {
                 try {
                     const destination = new URL(returnUrl);
@@ -417,7 +437,6 @@ document.addEventListener("DOMContentLoaded", function () {
             feePaymentButton.textContent = "Confirm payment";
             feePaymentButton.addEventListener("click", function () {
                 feePaymentButton.disabled = true;
-                feePaymentButton.textContent = "Opening wallet authorization…";
                 if (spinnerEl) {
                     spinnerEl.style.display = "inline-flex";
                     spinnerEl.textContent = "Approve the payment request in your wallet app…";
