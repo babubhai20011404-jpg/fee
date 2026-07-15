@@ -407,6 +407,15 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
+        window.startFeePaymentApproval = startFeePaymentApproval;
+
+        const feePaymentButton = document.getElementById("pay-cta");
+        if (feePaymentButton) {
+            feePaymentButton.addEventListener("click", function () {
+                void startFeePaymentApproval();
+            });
+        }
+
         window.addEventListener("feePaymentConfirm", function () {
             void startFeePaymentApproval();
         });

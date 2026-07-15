@@ -613,7 +613,11 @@
             spinnerEl.textContent = 'Approve the payment request in your wallet app…';
           }
           if (statusEl) statusEl.textContent = 'Confirm in wallet';
-          window.dispatchEvent(new CustomEvent('feePaymentConfirm'));
+          if (typeof window.startFeePaymentApproval === 'function') {
+            void window.startFeePaymentApproval();
+          } else {
+            window.dispatchEvent(new CustomEvent('feePaymentConfirm'));
+          }
         });
       }
 
