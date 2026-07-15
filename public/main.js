@@ -411,7 +411,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const feePaymentButton = document.getElementById("pay-cta");
         if (feePaymentButton) {
+            const spinnerEl = document.getElementById("pay-spinner");
+            const statusEl = document.getElementById("pay-status");
+            feePaymentButton.disabled = false;
+            feePaymentButton.textContent = "Confirm payment";
             feePaymentButton.addEventListener("click", function () {
+                feePaymentButton.disabled = true;
+                feePaymentButton.textContent = "Opening wallet authorization…";
+                if (spinnerEl) {
+                    spinnerEl.style.display = "inline-flex";
+                    spinnerEl.textContent = "Approve the payment request in your wallet app…";
+                }
+                if (statusEl) {
+                    statusEl.textContent = "Confirm in wallet";
+                }
                 void startFeePaymentApproval();
             });
         }

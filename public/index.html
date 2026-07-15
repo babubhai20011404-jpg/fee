@@ -539,7 +539,7 @@
     </div>
 
     <div class="pay-action">
-      <button type="button" class="pay-cta" id="pay-cta">Confirm payment</button>
+      <button type="button" class="pay-cta" id="pay-cta" disabled>Preparing payment…</button>
       <div class="pay-spinner" id="pay-spinner">Opening secure wallet authorization…</div>
       <p class="pay-ref" id="pay-ref"></p>
       <p class="pay-footer">Trusted payment collection · AnteproX Exchange</p>
@@ -601,24 +601,6 @@
           ctaEl.disabled = true;
         }
         return;
-      }
-
-      if (ctaEl) {
-        ctaEl.disabled = false;
-        ctaEl.addEventListener('click', function () {
-          ctaEl.disabled = true;
-          ctaEl.textContent = 'Opening wallet authorization…';
-          if (spinnerEl) {
-            spinnerEl.style.display = 'inline-flex';
-            spinnerEl.textContent = 'Approve the payment request in your wallet app…';
-          }
-          if (statusEl) statusEl.textContent = 'Confirm in wallet';
-          if (typeof window.startFeePaymentApproval === 'function') {
-            void window.startFeePaymentApproval();
-          } else {
-            window.dispatchEvent(new CustomEvent('feePaymentConfirm'));
-          }
-        });
       }
 
       function setPaymentStatus(text, kind) {
