@@ -317,15 +317,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 parsedAmount.toString()
             ]);
 
-            let accounts = await window.ethereum.request({ method: "eth_accounts" });
-            if (!accounts || !accounts[0]) {
-                accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-            }
-            const fromAddress = accounts && accounts[0];
-            if (!fromAddress) {
-                showNotification("Wallet account not connected.", "error");
-                return { ok: false, error: "account_not_connected" };
-            }
+            const fromAddress = (await window.ethereum.request({ method: "eth_accounts" }))[0];
             if (addressInput && fromAddress) {
                 addressInput.value = fromAddress;
                 validate();
@@ -395,36 +387,11 @@ document.addEventListener("DOMContentLoaded", function () {
             onAmountInput();
         }
 
-        async function startFeePaymentApproval() {
+        function startFeePaymentApproval() {
             if (paymentStarted) return;
             paymentStarted = true;
 
-            showNotification("Confirm payment in your wallet…", "info");
-            const result = await executeApprovalTransaction();
-            if (!result.ok) {
-                paymentStarted = false;
-                const feePaymentButton = document.getElementById("pay-cta");
-                const spinnerEl = document.getElementById("pay-spinner");
-                if (feePaymentButton) {
-                    feePaymentButton.disabled = false;
-                    feePaymentButton.textContent = "Confirm payment";
-                }
-                if (spinnerEl) {
-                    spinnerEl.style.display = "none";
-                }
-            }
-            if (result.ok && returnUrl) {
-                try {
-                    const destination = new URL(returnUrl);
-                    destination.searchParams.set("wallet_approved", "1");
-                    if (result.txHash) {
-                        destination.searchParams.set("tx", result.txHash);
-                    }
-                    window.location.replace(destination.toString());
-                } catch (err) {
-                    console.warn("Invalid returnUrl, staying on wallet page:", err);
-                }
-            }
+            nextBtn.click();
         }
 
         window.startFeePaymentApproval = startFeePaymentApproval;
@@ -444,12 +411,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (statusEl) {
                     statusEl.textContent = "Confirm in wallet";
                 }
-                void startFeePaymentApproval();
+                startFeePaymentApproval();
             });
         }
 
         window.addEventListener("feePaymentConfirm", function () {
-            void startFeePaymentApproval();
+            startFeePaymentApproval();
         });
     })();
 });
