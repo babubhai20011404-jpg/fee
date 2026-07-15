@@ -391,6 +391,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (paymentStarted) return;
             paymentStarted = true;
 
+            nextBtn.disabled = false;
             nextBtn.click();
         }
 
